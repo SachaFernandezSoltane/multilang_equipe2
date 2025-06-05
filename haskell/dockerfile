@@ -1,0 +1,29 @@
+# Étape 1 : build de l’exécutable avec stack
+FROM haskell:9.2 as builder
+
+WORKDIR /app
+
+# Copier les fichiers de build d’abord (pour utiliser le cache Docker intelligemment)
+COPY stack.yaml stack.yaml.lock ssp-project.cabal ./
+
+# Télécharger les dépendances
+RUN stack setup
+RUN stack build --install-ghc
+
+# Copier le reste du projet
+COPY . .
+
+# Compiler et copier les exécutables
+RUN stack build --copy-bins --install-ghc
+
+# Étape 2 : image minimale d'exécution
+FROM debian:bullseye-slim
+
+# Installer les libs nécessaires à l’exécutable Haskell
+RUN apt-get update && apt-get install -y libgmp-dev && rm -rf /var/lib/apt/lists/*
+
+# Copier l'exécutable depuis le builder
+COPY --from=builder /app/.stack-work/install/x86_64-linux/*/bin/ssp-project /usr/local/bin/ssp-project
+
+# Point d’entrée du conteneur
+ENTRYPOINT ["ssp-project"]

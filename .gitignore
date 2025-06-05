@@ -1,0 +1,119 @@
+# === GLOBAL ===
+*.log
+*.tmp
+*.swp
+*.bak
+.DS_Store
+Thumbs.db
+
+# === Docker ===
+**/Dockerfile.build
+**/.dockerignore
+
+# === C ===
+c/*.o
+c/*.out
+c/*.exe
+c/*.obj
+c/*.dll
+c/*.so
+c/*.a
+c/*.dSYM/
+c/build/
+c/cmake-build*/
+
+# === C++ ===
+c++/*.o
+c++/*.out
+c++/*.exe
+c++/*.obj
+c++/*.dll
+c++/*.so
+c++/*.a
+c++/*.dSYM/
+c++/build/
+c++/cmake-build*/
+
+# === C# ===
+csharp/bin/
+csharp/obj/
+csharp/*.dll
+csharp/*.exe
+csharp/*.pdb
+csharp/*.cache
+
+# === Java / Kotlin ===
+java/*.class
+java/*.jar
+java/*.war
+java/*.ear
+java/*.iml
+java/out/
+java/build/
+
+kotlin/*.class
+kotlin/*.jar
+kotlin/*.war
+kotlin/*.ear
+kotlin/*.iml
+kotlin/out/
+kotlin/build/
+
+# === Go ===
+go/*.exe
+go/*.test
+go/*.out
+go/vendor/
+go/go.sum
+go/go.work
+go/go.work.sum
+
+# === PHP ===
+php/vendor/
+php/composer.lock
+
+# === Python ===
+python/__pycache__/
+python/*.py[cod]
+python/*.pyo
+python/*.pyd
+python/*.egg*
+python/*.env
+python/.env
+python/.venv/
+python/venv/
+
+# === Scala ===
+scala/.metals/
+scala/.worksheet/
+scala/target/
+scala/.idea/
+scala/project/target/
+scala/project/project/
+scala/.bsp
+scala/.scala-build
+
+# === Haskell ===
+haskell/.stack-work/
+haskell/dist/
+haskell/dist-newstyle/
+haskell/*.hi
+haskell/*.o
+
+# === TypeScript / Node.js ===
+typescript/node_modules/
+typescript/dist/
+typescript/*.tsbuildinfo
+typescript/package-lock.json
+typescript/yarn.lock
+typescript/.bsp
+typescript/.scala-build
+typescript/SSP.js
+
+# === IDEs ===
+.vscode/
+.idea/
+
+# === Instances (test data) ===
+instances/*.out
+instances/*.tmp

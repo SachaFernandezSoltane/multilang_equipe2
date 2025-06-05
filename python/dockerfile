@@ -1,0 +1,9 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copier le script Python dans le conteneur
+COPY ssp.py .
+
+# Commande par défaut : exécuter le script avec l'argument passé
+ENTRYPOINT ["python", "ssp.py"]

@@ -1,0 +1,23 @@
+# Étape 1 : build de l'application Kotlin
+FROM openjdk:21-slim as builder
+
+# Installer le compilateur Kotlin (via SDKMAN ou manuellement)
+RUN apt-get update && apt-get install -y wget unzip && \
+    wget https://github.com/JetBrains/kotlin/releases/download/v1.9.22/kotlin-compiler-1.9.22.zip && \
+    unzip kotlin-compiler-1.9.22.zip -d /opt && \
+    ln -s /opt/kotlinc/bin/kotlinc /usr/local/bin/kotlinc
+
+# Copier le code source Kotlin
+COPY SSP.kt .
+
+# Compiler en .jar exécutable
+RUN kotlinc SSP.kt -include-runtime -d SSP.jar
+
+# Étape 2 : image d’exécution plus légère
+FROM openjdk:21-slim
+
+# Copier le .jar depuis le builder
+COPY --from=builder SSP.jar .
+
+# Commande par défaut pour exécuter le programme
+ENTRYPOINT ["java", "-jar", "SSP.jar"]

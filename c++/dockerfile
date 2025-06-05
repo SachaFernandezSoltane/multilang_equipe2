@@ -1,0 +1,15 @@
+# Image de base avec compilateur g++
+FROM ubuntu:22.04
+
+# Installer g++ et build-essential
+RUN apt-get update && apt-get install -y build-essential
+
+# Copier le code source dans le conteneur
+WORKDIR /app
+COPY SSP.cpp .
+
+# Compiler le programme (avec std=c++17 et link stdc++fs)
+RUN g++ -std=c++17 -o ssp SSP.cpp -lstdc++fs
+
+# Point d'entrée : le programme ssp
+ENTRYPOINT ["./ssp"]

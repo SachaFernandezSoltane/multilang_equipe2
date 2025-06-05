@@ -1,0 +1,11 @@
+# Utiliser l'image officielle PHP CLI
+FROM php:8.2-cli
+
+# Copier le script PHP dans le conteneur
+COPY ssp.php /app/ssp.php
+
+# Définir le répertoire de travail
+WORKDIR /app
+
+# Commande par défaut (lance le script avec un argument à passer via docker run)
+ENTRYPOINT ["php", "ssp.php"]

@@ -1,0 +1,24 @@
+# Étape 1 : compilation
+FROM gcc:13-bookworm AS builder
+WORKDIR /app
+
+# Copie tout le code source
+COPY . .
+
+# Compile avec optimisations & warnings utiles
+RUN gcc -O2 -Wall -Wextra -pedantic -o ssp SSP_optimised.c
+
+# Étape 2 : image finale minimale
+FROM debian:bookworm-slim
+
+# On fige l'UTF-8 pour les messages d'erreur lisibles
+ENV LC_ALL=C.UTF-8
+
+# Copie l'exécutable uniquement
+COPY --from=builder /app/ssp /usr/local/bin/ssp
+
+# Dossier de travail par défaut (optionnel)
+WORKDIR /data
+
+# ssp attend ses arguments (n, fichier ou dossier) : on le met en entrypoint
+ENTRYPOINT ["ssp"]

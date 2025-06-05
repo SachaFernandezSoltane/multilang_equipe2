@@ -1,0 +1,21 @@
+# Étape 1 : Build
+FROM golang:1.21-alpine AS build
+
+WORKDIR /app
+
+# Copier le code source
+COPY ssp.go .
+
+# Compiler le binaire
+RUN go build -o ssp ssp.go
+
+# Étape 2 : Image finale plus légère
+FROM alpine:latest
+
+WORKDIR /app
+
+# Copier le binaire compilé depuis l'étape build
+COPY --from=build /app/ssp .
+
+# Commande par défaut (exécute le programme avec un argument passé)
+ENTRYPOINT ["./ssp"]

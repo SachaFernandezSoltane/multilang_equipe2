@@ -1,0 +1,17 @@
+# Étape 1 : construire l'application
+FROM openjdk:17 AS build
+
+WORKDIR /app
+
+COPY SSP.java .
+
+RUN javac SSP.java
+
+# Étape 2 : image finale pour exécuter le programme
+FROM openjdk:17
+
+WORKDIR /app
+
+COPY --from=build /app/SSP.class .
+
+ENTRYPOINT ["java", "SSP"]
