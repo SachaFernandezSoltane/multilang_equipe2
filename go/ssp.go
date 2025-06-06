@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -6,6 +5,8 @@ import (
     "fmt"
     "math/rand"
     "os"
+    "path/filepath"
+    "sort"
     "strconv"
     "strings"
     "time"
@@ -17,64 +18,61 @@ type SSP struct {
     solutions [][]int
 }
 
-// Constructeur pour une instance aléatoire
+// Constructeur pour instance aléatoire (taille uniquement)
 func NewSSPRandom(n int) *SSP {
     if n <= 2 {
         panic("SSP size must be > 2")
     }
-
     original := make([]int, n)
     for i := 0; i < n; i++ {
         original[i] = i + 1
     }
-
     target := 1
     for i := 1; i < n; i++ {
         if rand.Intn(2) == 1 {
             target += original[i]
         }
     }
-
     return &SSP{target: target, original: original}
 }
 
-// Constructeur depuis un fichier avec :
-// - Ligne 1 : n (nombre d’éléments)
-// - Ligne 2 : target
-// - Ligne 3 : tous les éléments séparés par espace
+// Constructeur depuis fichier avec tri décroissant
+// Format attendu :
+//   Ligne 1 : n (nombre d’éléments)
+//   Ligne 2 : target
+//   Ligne 3 : tous les éléments séparés par espaces
 func NewSSPFromFile(filename string) *SSP {
     file, err := os.Open(filename)
     if err != nil {
-        panic("Unable to open file")
+        panic("Unable to open file: " + err.Error())
     }
     defer file.Close()
 
     scanner := bufio.NewScanner(file)
 
-    // Lire la première ligne (size)
+    // Ligne 1 : size
     if !scanner.Scan() {
         panic("Unexpected EOF reading size")
     }
-    size, err := strconv.Atoi(scanner.Text())
+    size, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
     if err != nil {
-        panic("Invalid size")
+        panic("Invalid size: " + err.Error())
     }
 
-    // Lire la deuxième ligne (target)
+    // Ligne 2 : target
     if !scanner.Scan() {
         panic("Unexpected EOF reading target")
     }
-    target, err := strconv.Atoi(scanner.Text())
+    target, err := strconv.Atoi(strings.TrimSpace(scanner.Text()))
     if err != nil {
-        panic("Invalid target")
+        panic("Invalid target: " + err.Error())
     }
 
-    // Lire la troisième ligne (tous les entiers séparés par espaces)
+    // Ligne 3 : tous les entiers séparés par espaces
     if !scanner.Scan() {
         panic("Unexpected EOF reading original numbers")
     }
-    line := scanner.Text()
-    parts := strings.Fields(line) // sépare par n'importe quel espace
+    parts := strings.Fields(scanner.Text())
     if len(parts) < size {
         panic("Not enough integers on third line")
     }
@@ -83,9 +81,14 @@ func NewSSPFromFile(filename string) *SSP {
     for i := 0; i < size; i++ {
         original[i], err = strconv.Atoi(parts[i])
         if err != nil {
-            panic("Invalid integer in original set")
+            panic("Invalid integer in original set: " + err.Error())
         }
     }
+
+    // Tri décroissant pour améliorer la prune
+    sort.Slice(original, func(i, j int) bool {
+        return original[i] > original[j]
+    })
 
     return &SSP{target: target, original: original}
 }
@@ -99,14 +102,13 @@ func (s *SSP) totalSum() int {
     return sum
 }
 
-// Appels récursifs branch-and-prune
+// Appel récursif branch-and-prune
 func (s *SSP) bpRecursive(i, partial, total int, x []bool) {
     if partial+total < s.target || partial > s.target {
         return
     }
-
     if partial == s.target {
-        sol := []int{}
+        sol := make([]int, 0)
         for idx, used := range x {
             if used {
                 sol = append(sol, s.original[idx])
@@ -115,7 +117,6 @@ func (s *SSP) bpRecursive(i, partial, total int, x []bool) {
         s.solutions = append(s.solutions, sol)
         return
     }
-
     if i >= len(s.original) {
         return
     }
@@ -137,7 +138,7 @@ func (s *SSP) RunBP() {
     s.bpRecursive(0, 0, s.totalSum(), x)
 }
 
-// Affiche les résultats
+// Affiche les résultats (instance + solutions + temps)
 func (s *SSP) Print() {
     fmt.Printf("SSP(n = %d; target = %d)\n", len(s.original), s.target)
     fmt.Printf("Original set = %v\n", s.original)
@@ -155,32 +156,53 @@ func (s *SSP) Print() {
     } else {
         fmt.Printf("bp found %d solutions\n", len(s.solutions))
     }
-
     elapsed := time.Since(start)
-    fmt.Printf("elapsed time: %d ms\n", elapsed.Milliseconds())
+    fmt.Printf("elapsed time: %d ms\n\n", elapsed.Milliseconds())
 }
 
 func main() {
     rand.Seed(time.Now().UnixNano())
 
     if len(os.Args) != 2 {
-        fmt.Println("Usage: go run ssp.go <size|filename>")
+        fmt.Println("Usage: go run ssp.go <size|filename|directory>")
+        return
+    }
+    arg := os.Args[1]
+
+    // 1) Si c'est un entier, on crée une instance aléatoire
+    if n, err := strconv.Atoi(arg); err == nil {
+        s := NewSSPRandom(n)
+        s.Print()
         return
     }
 
-    arg := os.Args[1]
-    var ssp *SSP
-
-    if n, err := strconv.Atoi(arg); err == nil {
-        // Si l'argument est un entier, on crée aléatoirement
-        ssp = NewSSPRandom(n)
-    } else {
-        // Sinon, on lit le fichier au format:
-        // ligne 1 : size
-        // ligne 2 : target
-        // ligne 3 : liste d'entiers séparés par espaces
-        ssp = NewSSPFromFile(arg)
+    // 2) Sinon, on essaie d'obtenir des infos sur le fichier/répertoire
+    info, err := os.Stat(arg)
+    if err != nil {
+        fmt.Println("Invalid argument:", err)
+        return
     }
 
-    ssp.Print()
+    // 3) Si c'est un fichier régulier, on lit et on trie, puis on exécute
+    if info.Mode().IsRegular() {
+        s := NewSSPFromFile(arg)
+        s.Print()
+        return
+    }
+
+    // 4) Si c'est un répertoire, on parcourt tous les .txt
+    if info.Mode().IsDir() {
+        entries, _ := os.ReadDir(arg)
+        for _, entry := range entries {
+            if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".txt") {
+                full := filepath.Join(arg, entry.Name())
+                fmt.Printf("=== Traitement de : %s ===\n", full)
+                s := NewSSPFromFile(full)
+                s.Print()
+            }
+        }
+        return
+    }
+
+    fmt.Println("Invalid argument: must be an integer, a file or a directory")
 }

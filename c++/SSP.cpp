@@ -11,6 +11,7 @@
 #include <random>
 #include <stdexcept>
 #include <chrono>
+#include <algorithm>
 
 class SSP {
 private:
@@ -23,6 +24,7 @@ private:
         if (partial + total < target || partial > target) return;
 
         if (partial == target) {
+            if (solutions.size() >= 10000000) return;
             std::vector<long long> sol;
             for (int k = 0; k < i; ++k) {
                 if (x[k]) sol.push_back(original[k]);
@@ -63,6 +65,8 @@ public:
             original[i] = i + 1;
             if (d(gen)) target += original[i];
         }
+        // Tri décroissant pour améliorer la prune
+        std::sort(original.begin(), original.end(), std::greater<long long>());
     }
 
     // Constructeur à partir d'un fichier texte
@@ -81,6 +85,8 @@ public:
         for (int i = 0; i < size; ++i) {
             if (!(input >> original[i])) throw std::invalid_argument("Error while parsing input file");
         }
+        // Tri décroissant pour améliorer la prune
+        std::sort(original.begin(), original.end(), std::greater<long long>());
         input.close();
     }
 

@@ -1,0 +1,11 @@
+{
+  "name": "ssp-js",
+  "version": "1.0.0",
+  "description": "Subset Sum Problem solver in JavaScript",
+  "main": "ssp.js",
+  "scripts": {
+    "start": "node ssp.js"
+  },
+  "author": "MJ",
+  "license": "MIT"
+}

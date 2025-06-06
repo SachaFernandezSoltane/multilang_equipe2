@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  ssp-c:
+    build:
+      context: ./C     
+    image: ssp-c           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-cs:
+    build:
+      context: ./c#     
+    image: ssp-cs           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-cpp:
+    build:
+      context: ./c++     
+    image: ssp-cpp           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-go:
+    build:
+      context: ./go   
+    image: ssp-go           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-java:
+    build:
+      context: ./java   
+    image: ssp-java           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-javascript:
+    build:
+      context: ./javascript   
+    image: ssp-js           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-kotlin:
+    build:
+      context: ./kotlin   
+    image: ssp-kt           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-php:
+    build:
+      context: ./php   
+    image: ssp-php           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-python:
+    build:
+      context: ./python   
+    image: ssp-py           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true
+  ssp-typescript:
+    build:
+      context: ./typescript   
+    image: ssp-ts           
+    volumes:
+      - ../instances:/data   
+    working_dir: /data       
+    entrypoint: ["ssp"]      
+    stdin_open: true
+    tty: true

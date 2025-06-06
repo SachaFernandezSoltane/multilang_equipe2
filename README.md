@@ -26,6 +26,7 @@ Le même algorithme a été soigneusement traduit dans les langages suivants :
 - ✅ **C++**
 - ✅ **Go**
 - ✅ **Java**
+- ✅ **Javascript**
 - ✅ **Kotlin**
 - ✅ **PHP**
 - ✅ **Python**
@@ -52,13 +53,29 @@ docker build -t ssp-<langage> .
 docker run -v "$PWD/../instances:/data" ssp-<langage> /data/<nom du fichier>
 ```
 
-### 📦 Utiliser stack pour Haskell
+### 📦 Lancer le Docker compose
+
+```bash
+docker compose -f 'docker-compose.yml' up -d --build 
+```
+
+Et enfin vous pouvez double cliquer sur le fichier launch.bat :)
+
+### 🟢 Utiliser stack pour Haskell
 
 Voir le readme du projet Haskell
 
-### 📦 Utiliser scala-cli pour Scala
+### 🟣 Utiliser scala-cli pour Scala
 
 Voir le readme du projet Scala
 
 
-"# multilang_equipe2" 
+## © 2025 Projet Multilang – Tous droits réservés.
+
+Ce projet a été conçu et développé par notre équipe dans un cadre pédagogique et exploratoire.  
+Aucune partie de ce projet ne peut être reproduite, utilisée à des fins commerciales ou distribuée sans notre accord écrit préalable.
+
+Les contributions open source sont les bienvenues, dans le respect de l'esprit initial du projet.  
+Pour toute utilisation externe ou demande de partenariat, veuillez nous contacter directement.
+
+

@@ -2,7 +2,7 @@ import System.Environment (getArgs)
 import System.Directory (doesDirectoryExist, listDirectory, doesFileExist)
 import System.FilePath ((</>), takeExtension)
 import System.Random (randomRIO)
-import Control.Monad (filterM, forM_, when)
+import Control.Monad (forM_)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import Data.List (intercalate)
 import Control.Exception (catch, IOException)
@@ -16,7 +16,7 @@ randomSSP n
     | n <= 2    = error "SSP size is too small or nonpositive"
     | otherwise = do
         let base = [1..fromIntegral n]
-        chosen <- mapM (\x -> do b <- randomRIO (False, True); return (if b then x else 0)) (tail base)
+        chosen <- mapM (\x -> do b <- randomRIO (False, True); return (if b then x else 0)) (drop 1 base)
         let totalTarget = 1 + sum chosen
         return $ SSP totalTarget base
 
@@ -39,11 +39,11 @@ subsetSum (SSP tgt nums) = go nums tgt []
   where
     go [] 0 acc = [reverse acc]
     go [] _ _   = []
-    go (x:xs) rem acc
-        | rem < 0  = []
+    go (x:xs) remT acc
+        | remT < 0  = []
         | otherwise =
-            let without = go xs rem acc
-                with    = go xs (rem - x) (x:acc)
+            let without = go xs remT acc
+                with    = go xs (remT - x) (x:acc)
             in with ++ without
 
 -- Display SSP
@@ -67,33 +67,35 @@ runSSP ssp = do
         else putStrLn $ "bp found " ++ show (length sols) ++ " solutions"
     putStrLn $ "Elapsed time: " ++ show (diffUTCTime end start)
 
+-- Process single file
+processFile :: FilePath -> IO ()
+processFile file = do
+    putStrLn $ "\n=== Traitement du fichier: " ++ file ++ " ==="
+    result <- readSSP file `catch` (\e -> print (e :: IOException) >> return (SSP 0 []))
+    runSSP result
+
 -- Main logic
 main :: IO ()
 main = do
     args <- getArgs
     if null args
-        then putStrLn "Usage: runhaskell SSP.hs <N | inputfile.txt | directory/>"
+        then putStrLn "Usage: stack exec ssp-project \"<N | inputfile.txt | directory/>\""
         else do
             let arg = head args
-            if last arg == '/'
+            dirExists <- doesDirectoryExist arg
+            fileExists <- doesFileExist arg
+
+            if dirExists
                 then do
-                    exists <- doesDirectoryExist arg
-                    if not exists
-                        then putStrLn $ "Le dossier '" ++ arg ++ "' n'existe pas ou n'est pas un répertoire."
-                        else do
-                            files <- listDirectory arg
-                            let txtFiles = filter (\f -> takeExtension f == ".txt") files
-                            fullPaths <- filterM (doesFileExist . (arg </>)) txtFiles
-                            if null fullPaths
-                                then putStrLn "Aucun fichier .txt trouvé dans le dossier."
-                                else forM_ fullPaths $ \file -> do
-                                    putStrLn $ "\n=== Traitement du fichier: " ++ file ++ " ==="
-                                    result <- readSSP (arg </> file)
-                                        `catch` (\e -> print (e :: IOError) >> return (SSP 0 []))
-                                    runSSP result
-                else do
-                    let maybeInt = reads arg :: [(Int, String)]
-                    ssp <- if not (null maybeInt)
-                        then randomSSP (fst (head maybeInt))
-                        else readSSP arg
-                    runSSP ssp
+                    files <- listDirectory arg
+                    let txtFiles = filter (\f -> takeExtension f == ".txt") files
+                    if null txtFiles
+                        then putStrLn "Aucun fichier .txt trouvé dans le dossier."
+                        else forM_ txtFiles $ \file -> processFile (arg </> file)
+
+            else if fileExists
+                then processFile arg
+
+            else case reads arg :: [(Int, String)] of
+                [(n, "")] -> randomSSP n >>= runSSP
+                _ -> putStrLn "Fichier ou dossier introuvable, ou argument invalide."
