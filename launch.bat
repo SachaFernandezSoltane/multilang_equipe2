@@ -22,8 +22,18 @@ start "ssp-js" cmd /k docker run -v "%cd%/instances:/data" ssp-js  /data/
 REM Ouvre une fenêtre pour ssp-kotlin
 start "ssp-kt" cmd /k docker run -v "%cd%/instances:/data" ssp-kt  /data/
 
+REM Ouvre une fenêtre pour ssp-php
+start "ssp-php" cmd /k docker run -v "%cd%/instances:/data" ssp-php  /data/
+
+REM Ouvre une fenêtre pour ssp-python
+start "ssp-py" cmd /k docker run -v "%cd%/instances:/data" ssp-py  /data/
+
 REM Ouvre une nouvelle fenêtre CMD, va dans le dossier scala, puis exécute scala-cli
 cd /d "%~dp0scala"
 start "scala cli" cmd /k scala-cli .\SSPApp.scala -- ../instances/
+
+REM Ouvre une fenêtre pour ssp-typescript
+cd /d "../"
+start "ssp-ts" cmd /k docker run -v "%cd%/instances:/data" ssp-ts  /data/
 
 endlocal

@@ -2,4 +2,4 @@
 
 ## 📦 Prérequis
 
-Lancer le script setup.bat
+Lancer le script setup.bat (pensez à supprimer le fichier SSP.js)

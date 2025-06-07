@@ -1,19 +1,19 @@
 
-import * as fs from 'fs';
+import * as fs from "fs";
+import * as path from "path";
 
 class SSP {
-  private target: number;
-  private original: number[];
-  private solutions: number[][] = [];
+  public target: number;
+  public original: number[];
+  public solutions: number[][] = [];
 
   constructor(target: number, original: number[]) {
     this.target = target;
     this.original = original;
   }
 
-  static createRandom(n: number): SSP {
-    if (n <= 0) throw new Error("SSP size cannot be nonpositive");
-    if (n <= 2) throw new Error("SSP size is too small");
+  public static createRandom(n: number): SSP {
+    if (n <= 2) throw new Error("SSP size must be > 2");
 
     const original = Array.from({ length: n }, (_, i) => i + 1);
     let target = 1;
@@ -23,29 +23,25 @@ class SSP {
       }
     }
 
+    // Tri décroissant
+    original.sort((a, b) => b - a);
+
     return new SSP(target, original);
   }
 
-static createFromFile(filename: string): SSP {
-  // Lire tout le contenu, séparer en lignes
-  const lines = fs.readFileSync(filename, "utf8")
-    .trim()
-    .split(/\r?\n/);
+  public static createFromFile(filename: string): SSP {
+    const text = fs.readFileSync(filename, "utf8").trim();
+    const lines = text.split(/\r?\n/);
+    const size = parseInt(lines[0], 10);
+    const target = parseInt(lines[1], 10);
+    const parts = lines[2].trim().split(/\s+/).map(Number);
+    const original = parts.slice(0, size);
 
-  // Ligne 1 : taille
-  const size = parseInt(lines[0], 10);
-  // Ligne 2 : target
-  const target = parseInt(lines[1], 10);
-  // Ligne 3 (unique) : liste d'entiers séparés par des espaces
-  const original = lines[2]
-    .trim()
-    .split(/\s+/)
-    .slice(0, size)    // on prend exactement `size` valeurs
-    .map((s) => parseInt(s, 10));
+    // Tri décroissant pour optimiser la prune
+    original.sort((a, b) => b - a);
 
-  return new SSP(target, original);
-}
-
+    return new SSP(target, original);
+  }
 
   private totalSum(): number {
     return this.original.reduce((a, b) => a + b, 0);
@@ -73,61 +69,73 @@ static createFromFile(filename: string): SSP {
     x[i] = false;
   }
 
-  runBP() {
-    const x = Array(this.original.length).fill(false);
+  public runBP(): void {
+    const x = new Array(this.original.length).fill(false);
     this.bpRecursive(0, 0, this.totalSum(), x);
   }
 
-  showTarget(): string {
-    return `Target is ${this.target}`;
-  }
+  public printSolutions(): void {
+    console.log(`SSP(n = ${this.original.length}; target = ${this.target})`);
+    console.log(`Original set = [${this.original.join(", ")}]`);
+    console.log(`Target is ${this.target}\n`);
 
-  showIntegers(): string {
-    return `Original set = [${this.original.join(', ')}]`;
-  }
+    console.log("Running bp...");
+    const start = Date.now();
+    this.runBP();
+    const end = Date.now();
+    console.log("done!");
 
-  toString(): string {
-    return `SSP(n = ${this.original.length}; target = ${this.target})`;
-  }
-
-  printSolutions(): void {
     if (this.solutions.length < 10) {
       for (const sol of this.solutions) {
-        console.log(`[${sol.join(', ')}]`);
+        console.log(`[${sol.join(", ")}]`);
       }
     } else {
       console.log(`bp found ${this.solutions.length} solutions`);
     }
+    console.log(`elapsed time: ${end - start} ms`);
   }
 }
 
-// --- main ---
+// --- MAIN CLI ---
 function runSSP(input: string) {
-  let ssp: SSP;
-  if (/^\d+$/.test(input)) {
-    const n = parseInt(input);
-    ssp = SSP.createRandom(n);
-  } else if (fs.existsSync(input)) {
-    ssp = SSP.createFromFile(input);
-  } else {
-    console.error("Argument must be an integer or a valid filename");
+  if (!isNaN(Number(input))) {
+    // Cas 1 : nombre → instance aléatoire
+    const n = parseInt(input, 10);
+    const s = SSP.createRandom(n);
+    s.printSolutions();
     return;
   }
 
-  console.log(ssp.toString());
-  console.log(ssp.showIntegers());
-  console.log(ssp.showTarget());
-  console.log();
+  if (!fs.existsSync(input)) {
+    console.error("Error: File or directory does not exist.");
+    process.exit(1);
+  }
 
-  console.log("Running bp...");
-  const start = Date.now();
-  ssp.runBP();
-  const end = Date.now();
-  console.log("done!");
+  const stat = fs.statSync(input);
 
-  ssp.printSolutions();
-  console.log(`elapsed time: ${end - start} ms`);
+  if (stat.isFile()) {
+    // Cas 2 : fichier .txt
+    const s = SSP.createFromFile(input);
+    s.printSolutions();
+  } else if (stat.isDirectory()) {
+    // Cas 3 : dossier → tous les .txt
+    const files = fs.readdirSync(input).filter(f => f.endsWith(".txt"));
+    for (const fname of files) {
+      const full = path.join(input, fname);
+      console.log(`=== Traitement de : ${full} ===`);
+      const s = SSP.createFromFile(full);
+      s.printSolutions();
+      console.log();
+    }
+  } else {
+    console.error("Unsupported path type.");
+  }
 }
 
+// Lancement CLI
 const args = process.argv.slice(2);
+if (args.length < 1) {
+  console.log("Usage: node SSP.js <size|filename|directory>");
+  process.exit(1);
+}
 runSSP(args[0]);

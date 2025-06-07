@@ -1,5 +1,8 @@
-
 <?php
+// Usage CLI :
+//   php ssp.php 15
+//   php ssp.php inst_n20.txt
+//   php ssp.php mon_dossier_txt
 
 class SSP
 {
@@ -18,7 +21,6 @@ class SSP
         if ($n <= 2) {
             throw new InvalidArgumentException("SSP size must be greater than 2");
         }
-
         $original = range(1, $n);
         $target = 1;
         for ($i = 1; $i < $n; $i++) {
@@ -26,7 +28,6 @@ class SSP
                 $target += $original[$i];
             }
         }
-
         return new SSP($target, $original);
     }
 
@@ -35,20 +36,14 @@ class SSP
         if (!file_exists($filename)) {
             throw new InvalidArgumentException("File not found");
         }
-
-        // Lire toutes les lignes en ignorant les lignes vides
         $lines = file($filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-
-        // 1ère ligne : nombre d’éléments
-        $size = (int) $lines[0];
-
-        // 2ème ligne : target
-        $target = (int) $lines[1];
-
-        // 3ème ligne (unique) : les entiers séparés par des espaces
-        // On prend exactement $size valeurs
-        $parts = preg_split('/\s+/', trim($lines[2]));
+        $size   = (int)$lines[0];
+        $target = (int)$lines[1];
+        $parts  = preg_split('/\s+/', trim($lines[2]));
         $original = array_map('intval', array_slice($parts, 0, $size));
+
+        // Tri décroissant pour optimiser la prune
+        rsort($original, SORT_NUMERIC);
 
         return new SSP($target, $original);
     }
@@ -63,22 +58,19 @@ class SSP
         if ($partial + $total < $this->target || $partial > $this->target) {
             return;
         }
-
         if ($partial === $this->target) {
             $solution = [];
-            foreach ($x as $index => $used) {
+            foreach ($x as $idx => $used) {
                 if ($used) {
-                    $solution[] = $this->original[$index];
+                    $solution[] = $this->original[$idx];
                 }
             }
             $this->solutions[] = $solution;
             return;
         }
-
         if ($i >= count($this->original)) {
             return;
         }
-
         $total -= $this->original[$i];
 
         $x[$i] = false;
@@ -121,24 +113,39 @@ class SSP
     }
 }
 
-// --- MAIN ---
+// --- MAIN CLI ---
 $arg = $argv[1] ?? null;
-
 if ($arg === null) {
-    echo "Usage: php ssp.php <size|filename>\n";
+    echo "Usage: php ssp.php <size|filename|directory>\n";
     exit(1);
 }
 
 try {
     if (is_numeric($arg)) {
-        // Appelé avec un entier
-        $ssp = SSP::createRandom((int) $arg);
-    } else {
-        // Appelé avec un nom de fichier
-        $ssp = SSP::createFromFile($arg);
+        // Cas entier → instance aléatoire
+        $ssp = SSP::createRandom((int)$arg);
+        $ssp->print();
     }
-    $ssp->print();
-} catch (Throwable $e) {
-    echo "Error: " . $e->getMessage() . "\n";
+    else if (is_file($arg)) {
+        // Cas fichier unique
+        $ssp = SSP::createFromFile($arg);
+        $ssp->print();
+    }
+    else if (is_dir($arg)) {
+        // Cas dossier : traiter tous les .txt
+        $files = glob(rtrim($arg, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . "*.txt");
+        foreach ($files as $file) {
+            echo "=== Traitement de : $file ===\n";
+            $ssp = SSP::createFromFile($file);
+            $ssp->print();
+            echo "\n";
+        }
+    }
+    else {
+        throw new InvalidArgumentException("Argument invalide : doit être un entier, un fichier ou un répertoire");
+    }
 }
-?>
+catch (Throwable $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+    exit(1);
+}
