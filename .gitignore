@@ -52,7 +52,6 @@ java/out/
 java/build/
 
 kotlin/*.class
-kotlin/*.jar
 kotlin/*.war
 kotlin/*.ear
 kotlin/*.iml
@@ -108,7 +107,6 @@ typescript/package-lock.json
 typescript/yarn.lock
 typescript/.bsp
 typescript/.scala-build
-typescript/SSP.js
 
 # === IDEs ===
 .vscode/
