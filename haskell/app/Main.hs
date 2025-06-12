@@ -3,14 +3,20 @@ import System.Directory (doesDirectoryExist, listDirectory, doesFileExist)
 import System.FilePath ((</>), takeExtension)
 import System.Random (randomRIO)
 import Control.Monad (forM_)
-import Data.Time.Clock (getCurrentTime, diffUTCTime)
-import Data.List (intercalate)
+import Data.Time.Clock (getCurrentTime, diffUTCTime, NominalDiffTime)
+import Text.Printf (printf)
+import Data.List (intercalate, sortBy)
 import Control.Exception (catch, IOException)
+import Control.DeepSeq (deepseq)
+
+-- Constants
+maxSolutions :: Int
+maxSolutions = 10000000
 
 -- SSP data structure
 data SSP = SSP { target :: Integer, original :: [Integer] }
 
--- Generate SSP with random target
+-- Generate SSP with random target and descending sort
 randomSSP :: Int -> IO SSP
 randomSSP n
     | n <= 2    = error "SSP size is too small or nonpositive"
@@ -18,9 +24,9 @@ randomSSP n
         let base = [1..fromIntegral n]
         chosen <- mapM (\x -> do b <- randomRIO (False, True); return (if b then x else 0)) (drop 1 base)
         let totalTarget = 1 + sum chosen
-        return $ SSP totalTarget base
+        return $ SSP totalTarget (reverse base)  -- Sorted in descending order
 
--- Read SSP from file
+-- Read SSP from file and sort descending
 readSSP :: FilePath -> IO SSP
 readSSP file = do
     contents <- readFile file
@@ -30,21 +36,23 @@ readSSP file = do
         (szStr:tStr:rest) -> do
             let size = read szStr
             let tgt  = read tStr
-            if length rest < size then parseError else return $ SSP tgt (take size $ map read rest)
+            if length rest < size then parseError
+            else return $ SSP tgt (reverse . sortBy compare $ take size $ map read rest)
         _ -> parseError
 
--- Backtracking
+-- Backtracking with limit and pruning
 subsetSum :: SSP -> [[Integer]]
-subsetSum (SSP tgt nums) = go nums tgt []
+subsetSum (SSP tgt nums) = take maxSolutions $ go nums tgt []
   where
     go [] 0 acc = [reverse acc]
     go [] _ _   = []
     go (x:xs) remT acc
-        | remT < 0  = []
-        | otherwise =
-            let without = go xs remT acc
-                with    = go xs (remT - x) (x:acc)
-            in with ++ without
+        | remT < 0         = []
+        | remT < sum xs    = with ++ without
+        | otherwise        = with ++ without
+      where
+        without = go xs remT acc
+        with    = go xs (remT - x) (x:acc)
 
 -- Display SSP
 showSSP :: SSP -> String
@@ -53,6 +61,10 @@ showSSP (SSP tgt nums) =
     "Original set = [" ++ intercalate "," (map show nums) ++ "]\n" ++
     "Target is " ++ show tgt
 
+-- Convert duration to ms
+printDuration :: NominalDiffTime -> IO ()
+printDuration t = printf "Elapsed time: %.3f ms\n" (realToFrac t * 1000 :: Double)
+
 -- Run SSP
 runSSP :: SSP -> IO ()
 runSSP ssp = do
@@ -60,14 +72,15 @@ runSSP ssp = do
     putStr "Running bp ... "
     start <- getCurrentTime
     let sols = subsetSum ssp
+    sols `deepseq` return ()  -- force evaluation
     end <- getCurrentTime
     putStrLn "done!"
     if length sols < 10
         then print sols
         else putStrLn $ "bp found " ++ show (length sols) ++ " solutions"
-    putStrLn $ "Elapsed time: " ++ show (diffUTCTime end start)
+    printDuration (diffUTCTime end start)
 
--- Process single file
+-- Process a single file
 processFile :: FilePath -> IO ()
 processFile file = do
     putStrLn $ "\n=== Traitement du fichier: " ++ file ++ " ==="
